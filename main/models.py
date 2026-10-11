@@ -18,3 +18,10 @@ class Profile(models.Model):
     birth_date = models.DateField()
     avatar = models.ImageField(upload_to='media')
     
+class Post(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    views = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
