@@ -128,4 +128,3 @@ MAILERS = {
     },
 }
 
-AUTH_USER_MODEL = 'main.models.User'
