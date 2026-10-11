@@ -104,7 +104,9 @@ def users_statistics(request):
 @parser_classes([MultiPartParser, FormParser])
 def profiles(request):
     if request.method == 'GET':
-        profile = Profile.objects.all()
+        profile = Profile.objects.annotate(
+            posts_count = Count('user__post',distinct=True),
+        )
         serializer = ProfileSerializer(profile, many=True)
         return Response(serializer.data, status=200)
 
@@ -150,3 +152,16 @@ def profiles_id(request,id):
         profile = Profile.objects.get(id=id)
         profile.delete()
         return Response(status=204)
+    
+    
+
+@extend_schema(
+    responses={200: None}
+)
+@api_view(['GET'])
+def city_statistics(request):
+    profile = Profile.objects.values('city').annotate(
+        users_count=Count('id')
+    ).order_by('-users_count')
+
+    return Response(profile, status=200)

@@ -52,11 +52,29 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'favorites_received': Favorite.objects.filter(post__user=obj).count()
         }
             
+class ProfileUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'full_name']
+        
+    def get_full_name(self, obj):
+        return f'{obj.first_name} {obj.last_name}'
+
 
 class ProfileSerializer(serializers.ModelSerializer):
+    user = ProfileUserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='user',
+        write_only=True
+    )
+    posts_count = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Profile
-        fields = ['id','user','bio','city','birth_date','avatar']
+        fields = ['id','user','user_id','bio','city','birth_date','avatar','posts_count']
         
         
 class PostSerializer(serializers.ModelSerializer):

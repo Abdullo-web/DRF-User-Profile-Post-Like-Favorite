@@ -9,4 +9,5 @@ urlpatterns = [
     
     path('profiles/', profiles),
     path('profiles/<int:id>/', profiles_id),
+    path('profiles/city-statistics/', city_statistics),
 ]
