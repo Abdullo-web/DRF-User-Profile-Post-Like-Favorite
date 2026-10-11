@@ -4,7 +4,20 @@ from rest_framework.decorators import api_view
 from .models import *
 from .serializers import *
 from django.db.models import Count,Avg, Min, Max
+from drf_spectacular.utils import extend_schema
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import api_view, parser_classes
 
+
+@extend_schema(
+    methods=['GET'],
+    responses={200: UserSerializer(many=True)}
+)
+@extend_schema(
+    methods=['POST'],
+    request=UserSerializer,
+    responses={201: UserSerializer}
+)
 @api_view(['GET','POST'])
 def users(request):
     if request.method == 'GET':
@@ -25,7 +38,13 @@ def users(request):
         return Response(serializer.errors,status=400)
          
 
-
+@extend_schema(
+    request=UserSerializer,
+    responses={
+        200: UserDetailSerializer,
+        204: None
+    }
+)
 @api_view(['GET','PUT','PATCH','DELETE'])
 def users_id(request,id):
     if request.method == 'GET':
@@ -51,12 +70,14 @@ def users_id(request,id):
         user.delete()
         return Response(status=204)
     
+
 @api_view(['GET'])
 def most_active(request):
     user = User.objects.annotate(posts_count=Count('post')).order_by('-posts_count')[:10]
     
     serializer = UserSerializer(user, many=True)
     return Response(serializer.data,status=200)
+
 
 @api_view(['GET'])
 def users_statistics(request):
@@ -70,8 +91,17 @@ def users_statistics(request):
     return Response(user, status=200)
 
 
-
+@extend_schema(
+    methods=['GET'],
+    responses={200: ProfileSerializer(many=True)}
+)
+@extend_schema(
+    methods=['POST'],
+    request=ProfileSerializer,
+    responses={201: ProfileSerializer}
+)
 @api_view(['GET', 'POST'])
+@parser_classes([MultiPartParser, FormParser])
 def profiles(request):
     if request.method == 'GET':
         profile = Profile.objects.all()
@@ -84,3 +114,39 @@ def profiles(request):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+    
+    
+@extend_schema(
+    request=ProfileSerializer,
+    responses={
+        200: ProfileSerializer,
+        204: None
+    }
+)
+@api_view(['GET','PUT','PATCH','DELETE'])
+def profiles_id(request,id):
+    if request.method == 'GET':
+        profile = Profile.objects.get(id=id)
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data,status=200)
+    
+    if request.method == 'PUT':
+        profile = Profile.objects.get(id=id)
+        serializer = ProfileSerializer(profile, data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=200)
+        return Response(serializer.errors,status=400)
+    
+    if request.method == 'PATCH':
+        profile = Profile.objects.get(id=id)
+        serializer = ProfileSerializer(profile, data= request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=200)
+        return Response(serializer.errors,status=400)
+    
+    if request.method == 'DELETE':
+        profile = Profile.objects.get(id=id)
+        profile.delete()
+        return Response(status=204)

@@ -6,5 +6,7 @@ urlpatterns = [
     path('users/<int:id>/',users_id),
     path('users/most-active/', most_active),
     path('users/statistics/', users_statistics),
+    
     path('profiles/', profiles),
+    path('profiles/<int:id>/', profiles_id),
 ]
