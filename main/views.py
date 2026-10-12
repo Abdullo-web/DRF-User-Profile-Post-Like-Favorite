@@ -185,3 +185,21 @@ def posts(request):
 
     serializer = PostSerializer(post, many=True)
     return Response(serializer.data, status=200)
+
+
+
+@extend_schema(
+    responses={200: PostDetailSerializer}
+)
+@api_view(['GET'])
+def posts_id(request, id):
+    try:
+        post = Post.objects.annotate(
+            likes_count=Count('like', distinct=True),
+            favorites_count=Count('favorite', distinct=True)
+        ).get(id=id)
+    except Post.DoesNotExist:
+        return Response({'error': 'Post not found'}, status=404)
+
+    serializer = PostDetailSerializer(post)
+    return Response(serializer.data, status=200)
