@@ -168,7 +168,7 @@ def profiles(request):
         404: dict
     }
 )
-@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@api_view(['GET','PUT','PATCH','DELETE'])
 def profiles_id(request, id):
     try:
         profile = Profile.objects.get(id=id)
@@ -231,8 +231,7 @@ def profiles_id(request, id):
 #         profile = Profile.objects.get(id=id)
 #         profile.delete()
 #         return Response(status=204)
-    
-    
+
 
 @extend_schema(
     responses={200: None}
