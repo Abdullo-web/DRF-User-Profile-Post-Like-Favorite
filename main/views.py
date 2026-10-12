@@ -338,3 +338,8 @@ def filter_posts(request):
 
     serializer = PostSearchSerializer(post, many=True)
     return Response(serializer.data, status=200)
+
+
+@api_view(['GET'])
+def posts_statistics(request):
+    pass
