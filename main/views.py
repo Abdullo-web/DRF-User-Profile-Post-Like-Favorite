@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import *
 from .serializers import *
-from django.db.models import Count,Avg, Min, Max,Case, When, Value, BooleanField
+from django.db.models import Count, Avg, Min, Max, Sum, Case, When, Value, BooleanField
 from drf_spectacular.utils import extend_schema
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes
@@ -45,33 +45,72 @@ def users(request):
     request=UserSerializer,
     responses={
         200: UserDetailSerializer,
-        204: None
+        204: None,
+        404: dict
     }
 )
-@api_view(['GET','PUT','PATCH','DELETE'])
-def users_id(request,id):
+
+@extend_schema(
+    request=UserSerializer,
+    responses={
+        200: UserDetailSerializer,
+        204: None,
+        404: dict
+    }
+)
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+def users_id(request, id):
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
     if request.method == 'GET':
-        user = User.objects.get(id=id)
         serializer = UserDetailSerializer(user)
-        return Response(serializer.data)
+        return Response(serializer.data, status=200)
+
     if request.method == 'PUT':
-        user = User.objects.get(id=id)
         serializer = UserSerializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data,status=200)
+            return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
+
     if request.method == 'PATCH':
-        user = User.objects.get(id=id)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
+
     if request.method == 'DELETE':
-        user = User.objects.get(id=id)
         user.delete()
         return Response(status=204)
+
+# @api_view(['GET','PUT','PATCH','DELETE'])
+# def users_id(request,id):
+#     if request.method == 'GET':
+#         user = User.objects.get(id=id)
+#         serializer = UserDetailSerializer(user)
+#         return Response(serializer.data)
+#     if request.method == 'PUT':
+#         user = User.objects.get(id=id)
+#         serializer = UserSerializer(user, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data,status=200)
+#         return Response(serializer.errors, status=400)
+#     if request.method == 'PATCH':
+#         user = User.objects.get(id=id)
+#         serializer = UserSerializer(user, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=200)
+#         return Response(serializer.errors, status=400)
+#     if request.method == 'DELETE':
+#         user = User.objects.get(id=id)
+#         user.delete()
+#         return Response(status=204)
     
 
 @api_view(['GET'])
@@ -120,41 +159,78 @@ def profiles(request):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
     
-    
+
 @extend_schema(
     request=ProfileSerializer,
     responses={
         200: ProfileSerializer,
-        204: None
+        204: None,
+        404: dict
     }
 )
-@api_view(['GET','PUT','PATCH','DELETE'])
-def profiles_id(request,id):
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+def profiles_id(request, id):
+    try:
+        profile = Profile.objects.get(id=id)
+    except Profile.DoesNotExist:
+        return Response({'error': 'Profile not found'}, status=404)
+
     if request.method == 'GET':
-        profile = Profile.objects.get(id=id)
         serializer = ProfileSerializer(profile)
-        return Response(serializer.data,status=200)
-    
+        return Response(serializer.data, status=200)
+
     if request.method == 'PUT':
-        profile = Profile.objects.get(id=id)
-        serializer = ProfileSerializer(profile, data = request.data)
+        serializer = ProfileSerializer(profile, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data,status=200)
-        return Response(serializer.errors,status=400)
-    
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
     if request.method == 'PATCH':
-        profile = Profile.objects.get(id=id)
-        serializer = ProfileSerializer(profile, data= request.data, partial=True)
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data,status=200)
-        return Response(serializer.errors,status=400)
-    
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
     if request.method == 'DELETE':
-        profile = Profile.objects.get(id=id)
         profile.delete()
         return Response(status=204)
+
+# @extend_schema(
+#     request=ProfileSerializer,
+#     responses={
+#         200: ProfileSerializer,
+#         204: None
+#     }
+# )
+# @api_view(['GET','PUT','PATCH','DELETE'])
+# def profiles_id(request,id):
+#     if request.method == 'GET':
+#         profile = Profile.objects.get(id=id)
+#         serializer = ProfileSerializer(profile)
+#         return Response(serializer.data,status=200)
+    
+#     if request.method == 'PUT':
+#         profile = Profile.objects.get(id=id)
+#         serializer = ProfileSerializer(profile, data = request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data,status=200)
+#         return Response(serializer.errors,status=400)
+    
+#     if request.method == 'PATCH':
+#         profile = Profile.objects.get(id=id)
+#         serializer = ProfileSerializer(profile, data= request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data,status=200)
+#         return Response(serializer.errors,status=400)
+    
+#     if request.method == 'DELETE':
+#         profile = Profile.objects.get(id=id)
+#         profile.delete()
+#         return Response(status=204)
     
     
 
@@ -350,12 +426,15 @@ def posts_statistics(request):
         total_views=Sum('views'),
         average_views=Avg('views'),
         max_views=Max('views'),
-        min_views=Min('views'),
-        total_likes=Count('like', distinct=True),
-        total_favorites=Count('favorite', distinct=True)
+        min_views=Min('views')
     )
 
+    post['total_likes'] = Like.objects.count()
+    post['total_favorites'] = Favorite.objects.count()
+
     return Response(post, status=200)
+
+
 
 
 @api_view(['GET'])
@@ -428,7 +507,7 @@ def post_likes(request, id):
         return Response({'error': 'Публикация не найдена'}, status=404)
 
     like = Like.objects.filter(post=post)
-    users = User.objects.filter(like__post=post)
+    users = User.objects.filter(like__post=post).distinct()
 
     serializer = PostLikeUserSerializer(users, many=True)
 
@@ -543,5 +622,59 @@ def user_analytics(request, id):
             'is_active_user': posts_last_7_days > 0
         }
     }
+
+    return Response(data, status=200)
+
+
+
+@extend_schema(
+    responses={200: dict}
+)
+@api_view(['GET'])
+def dashboard(request):
+    statistics = {
+        'users_count': User.objects.count(),
+        'profiles_count': Profile.objects.count(),
+        'posts_count': Post.objects.count(),
+        'likes_count': Like.objects.count(),
+        'favorites_count': Favorite.objects.count(),
+        'total_views': Post.objects.aggregate(total=Sum('views'))['total'] or 0,
+        'average_views': Post.objects.aggregate(average=Avg('views'))['average'] or 0
+    }
+
+    most_active_user = User.objects.annotate(
+        posts_count=Count('post')
+    ).order_by('-posts_count').first()
+
+    most_popular_post = Post.objects.annotate(
+        likes_count=Count('like', distinct=True)
+    ).order_by('-likes_count').first()
+
+    latest_posts = Post.objects.annotate(
+        likes_count=Count('like', distinct=True)
+    ).select_related('user').order_by('-created_at')[:5]
+
+    data = {
+        'statistics': statistics,
+        'most_active_user': None,
+        'most_popular_post': None,
+        'latest_posts': DashboardPostSerializer(
+            latest_posts, many=True
+        ).data
+    }
+
+    if most_active_user:
+        data['most_active_user'] = {
+            'id': most_active_user.id,
+            'username': most_active_user.username,
+            'posts_count': most_active_user.posts_count
+        }
+
+    if most_popular_post:
+        data['most_popular_post'] = {
+            'id': most_popular_post.id,
+            'title': most_popular_post.title,
+            'likes_count': most_popular_post.likes_count
+        }
 
     return Response(data, status=200)

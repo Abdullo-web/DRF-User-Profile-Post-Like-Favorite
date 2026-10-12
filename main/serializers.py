@@ -111,9 +111,10 @@ class PostDetailSerializer(serializers.ModelSerializer):
     author = PostDetailUserSerializer(source='user', read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
     favorites_count = serializers.IntegerField(read_only=True)
-    liked_by = PostDetailUserSerializer(source='user.like_set', many=True, read_only=True)
-    favorited_by = PostDetailUserSerializer(source='user.favorite_set', many=True, read_only=True)
-    is_popular = serializers.BooleanField(read_only=True)
+    liked_by = serializers.SerializerMethodField()
+    favorited_by = serializers.SerializerMethodField()
+    
+    is_popular = serializers.SerializerMethodField()
     is_viral = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     
@@ -130,7 +131,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
         return PostDetailUserSerializer(users, many=True).data
     
     def get_is_popular(self, obj):
-        return obj.likes_count >= 10 
+        return obj.likes_count >= 10
         
     def get_is_viral(self, obj):
         return obj.views >= 1000
@@ -314,3 +315,13 @@ class AnalyticsUserSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return f'{obj.first_name} {obj.last_name}'
 
+
+
+
+class DashboardPostSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(source='user.username', read_only=True)
+    likes_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'author', 'likes_count']
