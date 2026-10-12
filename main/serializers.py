@@ -142,6 +142,18 @@ class PostDetailSerializer(serializers.ModelSerializer):
     
     
     
+class UserPostsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']
+
+
+class UserPostItemSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'likes_count', 'views']
     
     
 class LikeSerializer(serializers.ModelSerializer):
@@ -153,3 +165,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ['id','user','post','created_at']
+        
+        
+        

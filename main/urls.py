@@ -13,4 +13,6 @@ urlpatterns = [
     
     path('posts/', posts),
     path('posts/<int:id>/', posts_id),
+    
+    path('users/<int:id>/posts/', user_posts),
 ]

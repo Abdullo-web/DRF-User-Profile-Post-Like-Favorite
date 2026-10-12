@@ -247,3 +247,24 @@ def posts_id(request, id):
     if request.method == 'DELETE':
         post.delete()
         return Response(status=204)
+    
+    
+@extend_schema(
+    responses={200: serializers.Serializer}
+)
+@api_view(['GET'])
+def user_posts(request, id):
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+    post = Post.objects.filter(user=user).annotate(
+        likes_count=Count('like', distinct=True)
+    )
+
+    return Response({
+        'user': UserPostsSerializer(user).data,
+        'posts_count': post.count(),
+        'results': UserPostItemSerializer(post, many=True).data
+    }, status=200)
