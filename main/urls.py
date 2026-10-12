@@ -33,4 +33,5 @@ urlpatterns = [
     path('favorites/<int:id>/', favorite_delete),
     
     path('users/<int:id>/favorites/', user_favorites),
+    path('users/<int:id>/analytics/', user_analytics),
 ]

@@ -8,6 +8,9 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes
 from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
+
 
 @extend_schema(
     methods=['GET'],
@@ -501,3 +504,44 @@ def user_favorites(request, id):
 
     serializer = UserFavoritesSerializer(user)
     return Response(serializer.data, status=200)
+
+
+
+
+@extend_schema(
+    responses={200: dict}
+)
+@api_view(['GET'])
+def user_analytics(request, id):
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response({'error': 'Пользователь не найден'}, status=404)
+
+    posts = Post.objects.filter(user=user)
+    favorites = Favorite.objects.filter(user=user)
+    likes_given = Like.objects.filter(user=user)
+
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    posts_last_7_days = posts.filter(created_at__gte=seven_days_ago).count()
+
+    data = {
+        'user': AnalyticsUserSerializer(user).data,
+        'posts': {
+            'posts_count': posts.count(),
+            'total_views': posts.aggregate(total=Sum('views'))['total'] or 0,
+            'average_views': posts.aggregate(average=Avg('views'))['average'] or 0
+        },
+        'engagement': {
+            'likes_received': Like.objects.filter(post__user=user).count(),
+            'favorites_received': Favorite.objects.filter(post__user=user).count(),
+            'likes_given': likes_given.count(),
+            'favorites_given': favorites.count()
+        },
+        'activity': {
+            'posts_last_7_days': posts_last_7_days,
+            'is_active_user': posts_last_7_days > 0
+        }
+    }
+
+    return Response(data, status=200)
