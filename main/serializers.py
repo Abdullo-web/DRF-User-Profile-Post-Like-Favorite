@@ -185,3 +185,24 @@ class PostSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'title', 'content', 'views', 'likes_count', 'favorites_count']
+        
+        
+class LikeUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']
+
+
+class LikePostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['id', 'title']
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    user = LikeUserSerializer(read_only=True)
+    post = LikePostSerializer(read_only=True)
+
+    class Meta:
+        model = Like
+        fields = ['id', 'user', 'post', 'created_at']
