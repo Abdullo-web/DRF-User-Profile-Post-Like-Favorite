@@ -166,32 +166,57 @@ def city_statistics(request):
 
     return Response(profile, status=200)
 
-
 @extend_schema(
+    methods=['GET'],
     responses={200: PostSerializer(many=True)}
 )
-@api_view(['GET'])
+@extend_schema(
+    methods=['POST'],
+    request=PostSerializer,
+    responses={201: PostSerializer}
+)
+@api_view(['GET','POST'])
 def posts(request):
-    post = Post.objects.annotate(
-        likes_count=Count('like', distinct=True),
-        favorites_count=Count('favorite', distinct=True)
-    ).annotate(
-        is_popular=Case(
-            When(likes_count__gte=10, then=Value(True)),
-            default=Value(False),
-            output_field=BooleanField()
-        )
-    ).order_by('-created_at')
+    if request.method == 'GET':
+        post = Post.objects.annotate(
+            likes_count=Count('like', distinct=True),
+            favorites_count=Count('favorite', distinct=True)
+        ).annotate(
+            is_popular=Case(
+                When(likes_count__gte=10, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+        ).order_by('-created_at')
 
-    serializer = PostSerializer(post, many=True)
-    return Response(serializer.data, status=200)
+        serializer = PostSerializer(post, many=True)
+        return Response(serializer.data, status=200)
+    
+    if request.method == 'POST':
+        serializer = PostSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors, status=400)
 
 
 
 @extend_schema(
+    methods=['GET'],
     responses={200: PostDetailSerializer}
 )
-@api_view(['GET'])
+@extend_schema(
+    methods=['PUT', 'PATCH'],
+    request=PostSerializer,
+    responses={200: PostSerializer}
+)
+@extend_schema(
+    methods=['DELETE'],
+    responses={204: None}
+)
+@api_view(['GET','PUT', 'PATCH', 'DELETE'])
 def posts_id(request, id):
     try:
         post = Post.objects.annotate(
@@ -201,5 +226,24 @@ def posts_id(request, id):
     except Post.DoesNotExist:
         return Response({'error': 'Post not found'}, status=404)
 
-    serializer = PostDetailSerializer(post)
-    return Response(serializer.data, status=200)
+    if request.method == 'GET':
+        serializer = PostDetailSerializer(post)
+        return Response(serializer.data, status=200)
+    
+    if request.method == 'PUT':
+        serializer = PostSerializer(post, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+    
+    if request.method == 'PATCH':
+        serializer = PostSerializer(post, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+    
+    if request.method == 'DELETE':
+        post.delete()
+        return Response(status=204)
