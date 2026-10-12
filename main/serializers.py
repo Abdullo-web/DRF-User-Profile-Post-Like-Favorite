@@ -206,3 +206,15 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
         fields = ['id', 'user', 'post', 'created_at']
+        
+        
+class LikeCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ['id', 'user', 'post', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate(self, data):
+        if Like.objects.filter(user=data['user'], post=data['post']).exists():
+            raise serializers.ValidationError('Вы уже поставили лайк этой публикации.')
+        return data

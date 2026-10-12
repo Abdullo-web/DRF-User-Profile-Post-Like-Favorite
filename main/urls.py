@@ -21,6 +21,7 @@ urlpatterns = [
     
     path('users/<int:id>/posts/', user_posts),
     
-    
+
     path('likes/', likes),
+    path('likes/<int:id>/', like_delete),
 ]

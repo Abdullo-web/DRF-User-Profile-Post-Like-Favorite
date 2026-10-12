@@ -374,8 +374,44 @@ def author_statistics(request):
     return Response(users, status=200)
 
 
-@api_view(['GET'])
+@extend_schema(
+    methods=['GET'],
+    responses={200: UserSerializer(many=True)}
+)
+@extend_schema(
+    methods=['POST'],
+    request=UserSerializer,
+    responses={201: UserSerializer}
+)
+@api_view(['GET','POST'])
 def likes(request):
-    like = Like.objects.select_related('user', 'post').all()
-    serializer = LikeSerializer(like, many=True)
-    return Response(serializer.data, status=200)
+    if request.method == 'GET':
+        like = Like.objects.select_related('user', 'post').all()
+        serializer = LikeSerializer(like, many=True)
+        return Response(serializer.data, status=200)
+    
+    if request.method == 'POST':
+        serializer = LikeCreateSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+    return Response(serializer.errors, status=400)
+
+
+
+
+# @extend_schema(
+#     methods=['DELETE'],
+#     responses={204: None}
+# )
+@api_view(['DELETE'])
+def like_delete(request, id):
+    try:
+        like = Like.objects.get(id=id)
+    except Like.DoesNotExist:
+        return Response({'error': 'Лайк не найден'}, status=404)
+
+    like.delete()
+    return Response({'message': 'Лайк удалён'}, status=200)
