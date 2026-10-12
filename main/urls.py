@@ -14,6 +14,8 @@ urlpatterns = [
     path('posts/', posts),
     path('posts/popular/', popular_posts),
     path('posts/<int:id>/', posts_id),
+    path('posts/search/', search_posts),
+    path('posts/filter/', filter_posts),
     
     path('users/<int:id>/posts/', user_posts),
 ]

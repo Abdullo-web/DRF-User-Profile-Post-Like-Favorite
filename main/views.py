@@ -7,7 +7,7 @@ from django.db.models import Count,Avg, Min, Max,Case, When, Value, BooleanField
 from drf_spectacular.utils import extend_schema
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes
-
+from django.db.models import Q
 
 @extend_schema(
     methods=['GET'],
@@ -290,4 +290,51 @@ def popular_posts(request):
     ).order_by('-likes_count')
     
     serializer = PopularPostSerializer(post, many=True)
+    return Response(serializer.data, status=200)
+
+
+@extend_schema(
+    responses={200: PostSearchSerializer(many=True)}
+)
+@api_view(['GET'])
+def search_posts(request):
+    q = request.query_params.get('q', '')
+
+    post = Post.objects.filter(
+        Q(title__icontains=q) | Q(content__icontains=q)
+    ).annotate(
+        likes_count=Count('like', distinct=True),
+        favorites_count=Count('favorite', distinct=True)
+    )
+
+    serializer = PostSearchSerializer(post, many=True)
+    return Response(serializer.data, status=200)
+
+
+@extend_schema(
+    responses={200: PostSearchSerializer(many=True)}
+)
+@api_view(['GET'])
+def filter_posts(request):
+    post = Post.objects.all()
+
+    min_views = request.query_params.get('min_views')
+    max_views = request.query_params.get('max_views')
+    user_id = request.query_params.get('user_id')
+
+    if min_views:
+        post = post.filter(views__gte=min_views)
+
+    if max_views:
+        post = post.filter(views__lte=max_views)
+
+    if user_id:
+        post = post.filter(user_id=user_id)
+
+    post = post.annotate(
+        likes_count=Count('like', distinct=True),
+        favorites_count=Count('favorite', distinct=True)
+    )
+
+    serializer = PostSearchSerializer(post, many=True)
     return Response(serializer.data, status=200)
