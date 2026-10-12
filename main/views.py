@@ -342,4 +342,33 @@ def filter_posts(request):
 
 @api_view(['GET'])
 def posts_statistics(request):
-    pass
+    post = Post.objects.aggregate(
+        total_posts=Count('id'),
+        total_views=Sum('views'),
+        average_views=Avg('views'),
+        max_views=Max('views'),
+        min_views=Min('views'),
+        total_likes=Count('like', distinct=True),
+        total_favorites=Count('favorite', distinct=True)
+    )
+
+    return Response(post, status=200)
+
+
+@api_view(['GET'])
+def author_statistics(request):
+    users = User.objects.annotate(
+        posts_count=Count('post'),
+        total_views=Sum('post__views'),
+        average_views=Avg('post__views'),
+        likes_received=Count('post__like', distinct=True)
+    ).values(
+        'id',
+        'username',
+        'posts_count',
+        'total_views',
+        'average_views',
+        'likes_received'
+    )
+
+    return Response(users, status=200)
