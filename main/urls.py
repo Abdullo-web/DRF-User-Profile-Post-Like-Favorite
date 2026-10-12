@@ -34,3 +34,4 @@ urlpatterns = [
     
     path('users/<int:id>/favorites/', user_favorites),
 ]
+# chast 4 a ne 2 
