@@ -75,12 +75,31 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['id','user','user_id','bio','city','birth_date','avatar','posts_count']
-        
+      
+class PostUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'full_name']
+
+    def get_full_name(self, obj):
+        return f'{obj.first_name} {obj.last_name}'  
         
 class PostSerializer(serializers.ModelSerializer):
+    author = PostUserSerializer(read_only=True)
+    author_id = serializers.PrimaryKeyRelatedField(
+        queryset = User.objects.all(),
+        source = 'user',
+        write_only = True
+    )
+    likes_count = serializers.IntegerField(read_only=True)
+    favorites_count = serializers.IntegerField(read_only=True)
+    is_popular = serializers.BooleanField(read_only=True)
+    
     class Meta:
         model = Post
-        fields = ['id','user','title','content','views','created_at','updated_at']
+        fields = ['id','title','content','author','author_id','views','likes_count','favorites_count','is_popular','created_at']
         
         
 class LikeSerializer(serializers.ModelSerializer):

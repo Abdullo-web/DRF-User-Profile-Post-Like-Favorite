@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import *
 from .serializers import *
-from django.db.models import Count,Avg, Min, Max
+from django.db.models import Count,Avg, Min, Max,Case, When, Value, BooleanField
 from drf_spectacular.utils import extend_schema
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes
@@ -165,3 +165,23 @@ def city_statistics(request):
     ).order_by('-users_count')
 
     return Response(profile, status=200)
+
+
+@extend_schema(
+    responses={200: PostSerializer(many=True)}
+)
+@api_view(['GET'])
+def posts(request):
+    post = Post.objects.annotate(
+        likes_count=Count('like', distinct=True),
+        favorites_count=Count('favorite', distinct=True)
+    ).annotate(
+        is_popular=Case(
+            When(likes_count__gte=10, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField()
+        )
+    ).order_by('-created_at')
+
+    serializer = PostSerializer(post, many=True)
+    return Response(serializer.data, status=200)
