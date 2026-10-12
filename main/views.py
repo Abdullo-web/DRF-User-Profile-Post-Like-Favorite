@@ -363,8 +363,7 @@ def popular_posts(request):
             default=Value(False),
             output_field=BooleanField()
         )
-    ).filter(
-        likes_count__gte=10
+    ).filter(likes_count__gte=10
     ).order_by('-likes_count')
     
     serializer = PopularPostSerializer(post, many=True)
