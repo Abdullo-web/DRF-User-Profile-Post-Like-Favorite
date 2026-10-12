@@ -167,4 +167,13 @@ class FavoriteSerializer(serializers.ModelSerializer):
         fields = ['id','user','post','created_at']
         
         
+class PopularPostSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(read_only=True)
+    favorites_count = serializers.IntegerField(read_only=True)
+    is_popular = serializers.BooleanField(read_only = True)
+    
+        
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'likes_count', 'favorites_count', 'is_popular']
         

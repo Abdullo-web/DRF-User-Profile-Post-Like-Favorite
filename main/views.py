@@ -268,3 +268,26 @@ def user_posts(request, id):
         'posts_count': post.count(),
         'results': UserPostItemSerializer(post, many=True).data
     }, status=200)
+    
+    
+@extend_schema(
+    responses={200: PopularPostSerializer(many=True)}
+)
+
+@api_view(['GET'])
+def popular_posts(request):
+    post = Post.objects.annotate(
+        likes_count=Count('like', distinct=True),
+        favorites_count=Count('favorite', distinct=True)
+    ).annotate(
+        is_popular=Case(
+            When(likes_count__gte=10, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField()
+        )
+    ).filter(
+        likes_count__gte=10
+    ).order_by('-likes_count')
+    
+    serializer = PopularPostSerializer(post, many=True)
+    return Response(serializer.data, status=200)

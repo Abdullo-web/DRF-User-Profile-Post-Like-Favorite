@@ -12,6 +12,7 @@ urlpatterns = [
     path('profiles/city-statistics/', city_statistics),
     
     path('posts/', posts),
+    path('posts/popular/', popular_posts),
     path('posts/<int:id>/', posts_id),
     
     path('users/<int:id>/posts/', user_posts),
