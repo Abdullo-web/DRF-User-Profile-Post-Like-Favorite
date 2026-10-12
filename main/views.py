@@ -415,3 +415,89 @@ def like_delete(request, id):
 
     like.delete()
     return Response({'message': 'Лайк удалён'}, status=200)
+
+
+@api_view(['GET'])
+def post_likes(request, id):
+    try:
+        post = Post.objects.get(id=id)
+    except Post.DoesNotExist:
+        return Response({'error': 'Публикация не найдена'}, status=404)
+
+    like = Like.objects.filter(post=post)
+    users = User.objects.filter(like__post=post)
+
+    serializer = PostLikeUserSerializer(users, many=True)
+
+    return Response({
+        'post_id': post.id,
+        'likes_count': like.count(),
+        'users': serializer.data
+    }, status=200)
+    
+    
+@api_view(['GET'])
+def top_posts_likes(request):
+    post = Post.objects.annotate(
+        likes_count=Count('like')
+    ).order_by('-likes_count')[:10]
+
+    serializer = TopPostLikeSerializer(post, many=True)
+    return Response(serializer.data, status=200)
+
+
+@extend_schema(
+    methods=['GET'],
+    responses={200: FavoriteSerializer(many=True)}
+)
+@extend_schema(
+    methods=['POST'],
+    request=FavoriteCreateSerializer,
+    responses={201: FavoriteCreateSerializer, 400: None}
+)
+@api_view(['GET', 'POST'])
+def favorites(request):
+    if request.method == 'GET':
+        favorite = Favorite.objects.select_related(
+            'user', 'post', 'post__user'
+        ).annotate(
+            likes_count=Count('post__like', distinct=True)
+        )
+
+        serializer = FavoriteSerializer(favorite, many=True)
+        return Response(serializer.data, status=200)
+
+    serializer = FavoriteCreateSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+    return Response(serializer.errors, status=400)
+
+@api_view(['DELETE'])
+def favorite_delete(request, id):
+    try:
+        favorite = Favorite.objects.get(id=id)
+    except Favorite.DoesNotExist:
+        return Response({'error': 'Избранное не найдено'}, status=404)
+
+    favorite.delete()
+    return Response({'message': 'Удалено из избранного'}, status=200)
+
+
+
+@extend_schema(
+    responses={200: UserFavoritesSerializer}
+)
+@api_view(['GET'])
+def user_favorites(request, id):
+    try:
+        user = User.objects.annotate(
+            favorites_count=Count('favorite')
+        ).get(id=id)
+    except User.DoesNotExist:
+        return Response({'error': 'Пользователь не найден'}, status=404)
+
+    serializer = UserFavoritesSerializer(user)
+    return Response(serializer.data, status=200)

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-from django.db.models import Sum
+from django.db.models import Sum,Count
 
 
 
@@ -218,3 +218,86 @@ class LikeCreateSerializer(serializers.ModelSerializer):
         if Like.objects.filter(user=data['user'], post=data['post']).exists():
             raise serializers.ValidationError('Вы уже поставили лайк этой публикации.')
         return data
+    
+    
+class PostLikeUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']
+        
+        
+class TopPostLikeSerializer(serializers.ModelSerializer):
+    post_id = serializers.IntegerField(source='id')
+    likes_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['post_id', 'title', 'likes_count']
+        
+        
+
+
+class FavoriteUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']
+
+
+class FavoritePostSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(source='user.username', read_only=True)
+    likes_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'author', 'likes_count']
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    user = FavoriteUserSerializer(read_only=True)
+    post = FavoritePostSerializer(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ['id', 'user', 'post', 'created_at']
+        
+        
+class FavoriteCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorite
+        fields = ['id', 'user', 'post', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate(self, data):
+        if Favorite.objects.filter(user=data['user'], post=data['post']).exists():
+            raise serializers.ValidationError(
+                'Эта публикация уже есть в избранном.'
+            )
+        return data
+    
+    
+
+class UserFavoritePostSerializer(serializers.ModelSerializer):
+    post_id = serializers.IntegerField(source='post.id', read_only=True)
+    title = serializers.CharField(source='post.title', read_only=True)
+    views = serializers.IntegerField(source='post.views', read_only=True)
+    likes_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ['post_id', 'title', 'likes_count', 'views']
+
+
+class UserFavoritesSerializer(serializers.ModelSerializer):
+    favorites_count = serializers.IntegerField(read_only=True)
+    results = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['username', 'favorites_count', 'results']
+
+    def get_results(self, obj):
+        favorites = Favorite.objects.filter(user=obj).select_related('post').annotate(
+            likes_count=Count('post__like', distinct=True)
+        )
+        return UserFavoritePostSerializer(favorites, many=True).data
+

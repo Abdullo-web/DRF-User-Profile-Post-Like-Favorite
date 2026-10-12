@@ -24,4 +24,13 @@ urlpatterns = [
 
     path('likes/', likes),
     path('likes/<int:id>/', like_delete),
+    
+    path('posts/<int:id>/likes/', post_likes),
+    
+    path('likes/top-posts/', top_posts_likes),
+    
+    path('favorites/', favorites),
+    path('favorites/<int:id>/', favorite_delete),
+    
+    path('users/<int:id>/favorites/', user_favorites),
 ]
